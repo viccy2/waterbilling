@@ -56,11 +56,11 @@ $db['default']['hostname'] = 'localhost';//localhost
 //$db['default']['password'] = ']y+)clhKsdSh';
 //$db['default']['database'] = 'crazy_waterbillingsystem';		// **** Live Database ******//
 
-$db['default']['username'] = 'paradi12_waterbilling';
-$db['default']['password'] = 'securemelikekilode';
-$db['default']['database'] = 'paradi12_waterbilling';		// **** Live Database ******//
+$db['default']['username'] = 'root';
+$db['default']['password'] = '';
+$db['default']['database'] = 'waterbilling';		// **** Live Database ******//
 $db['default']['dbdriver'] = 'mysql';
-// $db['default']['port']	   = "3306";
+$db['default']['port']	   = "3306";
 $db['default']['dbprefix'] = '';
 $db['default']['pconnect'] = TRUE;
 $db['default']['db_debug'] = TRUE;
