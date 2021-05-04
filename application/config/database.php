@@ -47,7 +47,7 @@
 $active_group = 'default';
 $active_record = TRUE;
 // $url = parse_url(getenv("CLEARDB_DATABASE_URL"))
-$db['default']['hostname'] = 'localhost';//localhost
+$db['default']['hostname'] = 'us-cdbr-east-03.cleardb.com';//localhost
 //******** Local ********//
 //$db['default']['username'] = 'root';//crazy_kiranauser
 //$db['default']['password'] = ''; //P3thXwqBhRJ.
@@ -56,9 +56,9 @@ $db['default']['hostname'] = 'localhost';//localhost
 //$db['default']['password'] = ']y+)clhKsdSh';
 //$db['default']['database'] = 'crazy_waterbillingsystem';		// **** Live Database ******//
 
-$db['default']['username'] = 'root';
-$db['default']['password'] = '';
-$db['default']['database'] = 'waterbilling';		// **** Live Database ******//
+$db['default']['username'] = 'b4f62041db9945';
+$db['default']['password'] = '93f18e82';
+$db['default']['database'] = 'heroku_944219a13a5c416';		// **** Live Database ******//
 $db['default']['dbdriver'] = 'mysql';
 $db['default']['port']	   = "3306";
 $db['default']['dbprefix'] = '';
