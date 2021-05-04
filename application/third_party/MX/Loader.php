@@ -101,7 +101,7 @@ class MX_Loader extends CI_Loader
 	}
 
 	/** Load a module helper **/
-	public function helper($helper) {
+	public function helper($helper = []) {
 		
 		if (is_array($helper)) return $this->helpers($helper);
 		
@@ -130,7 +130,7 @@ class MX_Loader extends CI_Loader
 	}
 	
 	/** Load a module library **/
-	public function library($library, $params = NULL, $object_name = NULL) {
+	public function library($library = '', $params = NULL, $object_name = NULL) {
 		
 		if (is_array($library)) return $this->libraries($library);		
 		
