@@ -1,0 +1,730 @@
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+class addpaymentcustomer extends CI_Controller {
+	// Declare globle variable here
+	
+	public $headerPage = '../../views/admin-includes/header'; 
+	
+	public $table_name = 'tbl_addmetercustomer';	  //*****  Table name  *****//
+	public $addPage  = 'addpaymentcustomer_add';	     //*****  Add page    *****//
+	public $editPage = 'addpaymentcustomer_edit';     //*****  Edit page   *****//
+	public $listPage = 'addpaymentcustomer';		   //*****  View page   *****//
+	public $viewPage ='addpaymentcustomer_view';
+	public $searchPage ='addmetercustomer_search';
+	public $addcustomerajax = 'addmetercustomer_search _ajax';
+	public $month_customer_invoice = 'month_customer_invoice';
+	public $printPage = 'addpaymentcustomer-print';
+	public $addpages_ajax = 'addpaymentcustomer_add _ajax';
+	
+	public $listPage_redirect = '/master/addpaymentcustomer';		  //*****  Redirect View  *****//
+	public $addPage_redirect = '/master/addpaymentcustomer/add/';	 //*****  Redirect Add   *****//
+	public $editPage_redirect = '/master/addpaymentcustomer/edit/';  //*****  Redirect Edit  *****//
+	
+	
+	public function __construct() {
+        parent::__construct();
+  		$this->load->model('addpaymentcustomer_model','my_model');   //*****    Model Loading     *****//	
+		$this->load->model('common_model','comm_model');	
+		$this->load->library('form_validation');
+		$this->load->library('Pdf');
+		$this->form_validation->set_error_delimiters('<div class="error" style="color:red;">', '</div>');
+		error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
+		error_reporting(0);
+		ini_set('display_errors','off'); 				
+		$this->load->model('adminheader_model','top_model');
+    }
+	public function index(){ 		 //*****  View Loading  *****//
+		$header['roleResponsible'] = $this->top_model->get_responsibilities();
+		$data['record'] = $this->my_model->get_all_records();	
+		$data['amountrate'] = $this->my_model->get_amountrate();				
+		//$header['record_info'] = $this->top_model->get_last_login_details(1);
+		$this->load->view($this->headerPage,$header);
+		$this->load->view($this->listPage,$data);
+	}
+	
+	/** Add Function **/
+	public function add(){ //print_r($this->input->post);exit;
+		$data['msg'] ='';
+		$header['roleResponsible'] = $this->top_model->get_responsibilities();
+		$data['addcustomer'] = $this->my_model->get_addcustomer();
+		if($this->input->post('add') != ''){ 
+				$result = $this->my_model->add_record();
+				if($result){
+					$this->session->set_flashdata('msg_succ', 'Inserted Successfully...');
+					redirect($this->listPage_redirect);
+				}else{
+					$data['msg'] = "Not Inserted...";
+					redirect($this->listPage_redirect);
+				}
+
+			}
+		if($this->input->post('total_add') != ''){
+			    $insert_ids = $this->input->post('checkbox');
+				for($i=0;$i<count($insert_ids);$i++){
+					$result = $this->my_model->add_record_multiple($insert_ids[$i]);
+				}
+				//$result = $this->my_model->add_transaction();
+				if($result){
+					$this->session->set_flashdata('msg_succ', 'Inserted Successfully...');
+					redirect($this->listPage_redirect);
+				}else{
+					$data['msg'] = "Not Inserted...";
+					redirect($this->listPage_redirect);
+				}
+			}
+		$data['ledger'] = $this->my_model->fetchLedger();            // fetch ledgers	
+		$this->load->view($this->headerPage,$header);
+		$this->load->view($this->addPage,$data);
+	}
+	
+	public function get_custmer_all_data()
+	{		//*****  Add Search records  *****//
+			
+			$id = $this->input->post('id');
+			$this->load->model('addpaymentcustomer_model','my_model');
+			$data['reading'] = $this->my_model->get_addcustomer_add_all_records($id);
+			$data['record'] = $this->my_model->get_meter_reading_all_records($id);
+			$data['collectinfo'] =  $this->my_model->collectinfo($id);
+			$data['month_collectinfo'] = $this->my_model->month_collectinfo($id);
+			$data['second_higest_radi'] = $this->my_model->get_second_meter($id);
+				
+			$data['amountrate'] = $this->my_model->get_unitvalue();
+			$this->load->view($this->addpages_ajax,$data);
+			
+	}
+	
+	public function edit($id){
+		$header['roleResponsible'] = $this->top_model->get_responsibilities();
+		$data['record'] = $this->my_model->get_single_record($id);
+		$data['addcustomer'] = $this->my_model->get_addcustomer();
+		$data['per_unit'] = $this->my_model->get_amountrate();
+		$data['msg'] ='';
+		//echo'<pre>';print_r($data['record']);exit;
+		if($this->input->post('add') != ''){
+			$result = $this->my_model->update_record($id);
+			
+			
+	
+			if($result){
+				//echo'<pre>';print_r($result);exit;
+				$this->session->set_flashdata('msg_succ', 'Updated Successfully...');
+				redirect($this->listPage_redirect);
+			}else{
+				$data['msg'] = "Not Updated...";
+			}
+		}
+		//$header['host'] = $this->comm_model->get_single_record();				
+		//$header['record_info'] = $this->top_model->get_last_login_details(1);
+		$this->load->view($this->headerPage,$header);
+		$this->load->view($this->editPage,$data);
+
+	}
+	
+	/** View Function **/
+	public function view($id){ 
+		$header['roleResponsible'] = $this->top_model->get_responsibilities();
+		$data['record'] = $this->my_model->get_single_record($id);
+		//print_r($data['record']);
+		//$header['host'] = $this->comm_model->get_single_record();						
+		//$header['record_info'] = $this->top_model->get_last_login_details(1);
+		$this->load->view($this->headerPage,$header);
+		$this->load->view($this->viewPage,$data);
+	}
+	
+	
+	/** Status Change Function **/
+	/*public function contactStatus($id,$status){
+		$data['msg'] ='';
+		//echo $status;
+		$statu = ($status == 1 ? 'Status Change' : 'Status Change');
+		if($id){
+			$result = $this->my_model->status_record($id,$status);
+			if($result){
+				$this->session->set_flashdata('msg_succ', $statu.' Successfully...');
+				redirect($this->listPage_redirect);
+			}else{
+				$data['msg'] = " Status Not Updated...";
+			}
+		}
+	}	*/
+	
+	/*public function Status($id,$status,$customer_id){
+		$data['msg'] ='';
+		//echo $status;
+		$statu = ($status == 1 ? 'Status Change' : 'Status Change');
+		if($id){
+			$result = $this->my_model->status_record($id,$status,$customer_id);
+			if($result){
+				$this->session->set_flashdata('msg_succ', $statu.' Successfully...');
+				redirect($this->listPage_redirect);
+			}else{
+				$data['msg'] = " Status Not Updated...";
+			}
+		}
+	}	*/
+	
+	public function Status($id,$balance,$customer_id){
+		$data['msg'] ='';
+		//print_r($balance);
+		$statu = ($balance == 0 ? 'Status Change' : 'Status Change');
+		if($id){
+			$result = $this->my_model->status_record($id,$balance,$customer_id);
+			if($result){
+				$this->session->set_flashdata('msg_succ', $statu.' Successfully...');
+				redirect($this->listPage_redirect);
+			}else{
+				$data['msg'] = " Status Not Updated...";
+			}
+		}
+	}
+	
+	/** Delete Function **/
+	public function delete($id){ 
+		$data['msg'] ='';
+		if($id){
+			$result = $this->my_model->delete_record($id);
+			if($result){
+			
+				$this->session->set_flashdata('msg_succ', 'Deleted Successfully...');
+				redirect($this->listPage_redirect);
+			}else{
+				$data['msg'] = "Not Deleted...";
+			}
+		}
+	}
+	/** Multiple Delete Function **/
+	public function multi_delete(){
+		$data['msg'] ='';
+		if($this->input->post('delete_ids') != ''){
+			$delete_ids = $this->input->post('delete_ids');
+			for($i=0;$i<count($delete_ids);$i++){
+				$result = $this->my_model->delete_record($delete_ids[$i]);
+			}
+			if($result){
+				$this->session->set_flashdata('msg_succ', 'Deleted Successfully...');
+				redirect($this->listPage_redirect);
+			}else{
+				$this->session->set_flashdata('msg_succ', 'Not Deleted...');
+				redirect($this->listPage_redirect);
+			}
+		}else{
+			$this->session->set_flashdata('msg_succ', 'Select any Check Box...');
+			redirect($this->listPage_redirect);
+		}
+	}
+	
+	public function getoldmeter(){
+		$id = $this->input->post('id');
+		$getData=$this->my_model->select_getoldmeter($id);
+		//echo'<pre>';print_r($getData);exit;
+		if(!empty($getData)){
+			if($getData[0]['status']=='1'){
+		$selBox = '0'.'-'.'0';
+			}else{
+				$pay_amount = $getData[0]['total'];
+			$selBox = $getData[0]['consumedunits'].'-'.$pay_amount;
+            
+			}
+			
+		}if(empty($getData)){
+		
+			$selBox = '0'.'-'.'0';
+		}
+		echo $selBox;
+		
+		
+	}
+	
+	public function get_monthly_customer_invoice($id){ 
+		$data['record'] = $this->my_model->get_single_record($id);
+		$data['address'] = $this->my_model->get_address();
+		//echo'<pre>';print_r($data['record']);exit; 
+		$this->load->view($this->headerPage,$header);
+		$this->load->view($this->month_customer_invoice,$data);
+	}	
+	
+	public function printInvoice($id){
+		$data['msg'] ='';
+		$data['record'] = $this->my_model->get_single_record($id);
+		$data['address'] = $this->my_model->get_address();
+		//echo'<pre>';print_r($data['record']);exit; 
+		$this->load->view($this->printPage,$data);
+	}	
+	public function get_name(){ 
+		 $cust_id=$this->input->post('id');
+         $data['record'] = $this->my_model->get_name($cust_id);	
+		$selBox ='
+		     <div class="form-group">
+			  <label class="col-sm-4 control-label no-padding-right" for="form-field-1">Name: </label>
+			  <div class="col-sm-8">		
+		    <input type="text" name="first_name" id="first_name" class="col-xs-10 col-sm-10" value="'.$data['record']['first_name'].''.$data['record']['middle_name'].''.$data['record']['last_name'].'"required  readonly >';
+		
+		echo $selBox;
+	}
+    
+    function tchtemailcheck() {
+		
+       $id = $this->input->post('id');
+       $getData = $this->my_model->select_getoldmeter($id);	
+	   //print_r($getData);
+	   if(!empty($getData)){
+		   
+		    if($getData[0]['addmetercustomer_status']=='1'){
+		        //$selBox = '0'.'-'.'0';
+				$pay_amount = $getData[0]['total'];
+				$selBox = $getData[0]['consumedunits'].'-'.$getData[0]['balance'];
+			}else{
+				$pay_amount = $getData[0]['total'];
+			    //$selBox = $getData[0]['consumedunits'].'-'.$pay_amount;
+				$selBox = $getData[0]['consumedunits'].'-'.$getData[0]['balance'];
+               
+			}
+			
+		}if(empty($getData)){
+		
+			//$selBox = '0'.'-'.'0';
+			$selBox = '0'.'-'.'0';
+		}
+		echo $selBox;
+    }
+	
+	public function get_custmer_name(){ 
+		$cust_id=$this->input->post('id');
+        $data['record'] = $this->my_model->get_name($cust_id);	
+		$selBox ='
+		      <div class="form-group">
+				  <label class="col-sm-2 control-label">Name : </label>
+				  <div class="col-sm-3">		
+				     <input class="form-control" type="text" name="first_name" id="first_name" value="'.$data['record']['first_name'].'&nbsp;'.$data['record']['middle_name'].'&nbsp;'.$data['record']['last_name'].'"required  readonly >
+				     <input class="form-control" type="hidden" name="tab_id" id="tab_id" value="'.$data['record']['id'].'"required  readonly >
+				  </div>
+				  <label class="col-sm-2 control-label">Email : </label>
+				  <div class="col-sm-3">		
+				     <input class="form-control" type="text" name="email" id="email" value="'.$data['record']['email_id'].'"required  readonly >
+				  </div>
+			  </div>
+		     <div class="form-group">
+				  <label class="col-sm-2 control-label">Mobile : </label>
+				  <div class="col-sm-3">		
+				     <input class="form-control" type="text" name="mobile1" id="mobile1" value="'.$data['record']['mobile1'].'"required  readonly >
+				  </div>
+		          <label class="col-sm-2 control-label">Address : </label>
+				  <div class="col-sm-3">		
+				     <input class="form-control" type="text" name="address" id="address" value="'.$data['record']['address'].'"required  readonly >
+				  </div>
+			  </div>';
+			  
+		echo $selBox;
+	}
+	public function get_calculation(){ 
+	
+		 $id = $this->input->post('id');
+		 $oldmeter = $this->input->post('oldmeter');
+		 
+		 $newmeter = $id - $oldmeter;
+		 
+		 $tb_amount =  $this->db->get('tbl_amountrate')->row_array();
+		 
+		 extract($tb_amount);
+		 
+		 echo $selBox = $newmeter * $per_unit; 
+		  
+	}
+	public function monthlyreceipt($customer,$month,$year) {
+		
+	//print_r($customer);	print_r($month);	print_r($year);	
+    $receiptdata = $this->my_model->getReceiptData($customer, $month, $year);
+	$getaddress = $this->my_model->get_address();
+	$customerdetials = $this->my_model->customer_deatils($customer);
+
+   // print_r($receiptdata);
+	//print_r($getaddress);
+    extract($receiptdata);
+    extract($getaddress);
+	extract($customerdetials);
+	$todate = date('d-m-Y');
+	$datefor = date('d-m-Y', strtotime($tdate));
+    //============================================================+
+    // create new PDF document
+    $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+    // set document information
+    $pdf->SetCreator(PDF_CREATOR);
+
+
+    // remove default header/footer
+    $pdf->setPrintHeader(false);
+    $pdf->setPrintFooter(false);
+
+    // set default header data
+    $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, PDF_HEADER_TITLE . ' 001', PDF_HEADER_STRING, array(0, 64, 255), array(0, 64, 128));
+    $pdf->setFooterData(array(0, 64, 0), array(0, 64, 128));
+
+    // set header and footer fonts
+    $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+    $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+    // set default monospaced font
+    $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+    // set margins
+    $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+    $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+    $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+    // set auto page breaks
+    $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+    // set image scale factor
+    $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+    // set some language-dependent strings (optional)
+    if (@file_exists(dirname(__FILE__) . '/lang/eng.php')) {
+        require_once(dirname(__FILE__) . '/lang/eng.php');
+        $pdf->setLanguageArray($l);
+    }
+
+    // ---------------------------------------------------------    
+    // set default font subsetting mode
+    $pdf->setFontSubsetting(false);
+
+    // Set font
+    // dejavusans is a UTF-8 Unicode font, if you only need to
+    // print standard ASCII chars, you can use core fonts like
+    // helvetica or times to reduce file size.
+    $pdf->SetFont('helvetica', '', 9, '', true);
+	//$pdf->SetBackColor(255,255,255);
+
+    // Add a page
+    // This method has several options, check the source code documentation for more information.
+    $pdf->AddPage();
+
+    /// create some HTML content
+
+    $html = <<<EOD
+	<table border="1" cellspacing="5" cellpadding="15" width="100%">
+	<tr>
+	<td>
+	<div class="invoice-inner" style="margin: 0 15px;padding: 20px 0;">
+	    <table border="0" cellspacing="0" cellpadding="0" width="100%">
+			<tr>
+				<td align="center" valign="top">
+				     <div class="logoDiv">
+					     <img id="logo" src="http://dayaxpower.com/images/favicon/logo.jpg" height="80">
+						 <h1>Company Name</h1>
+					     <h2>Invoice Receipt</h2>
+						 <p>(for Meter Customer)</p>
+					</div>
+				</td>
+			</tr>
+        </table>
+		<table border="0" cellspacing="0" cellpadding="0" width="100%">
+			<tr>
+				<td align="right" valign="top">
+				    Address: Electicity Department<br/>
+					Near takli Road<br/>
+					Nagpur-440012
+				</td>
+			</tr>
+        </table>
+		<br/>
+		<div class="invoice-address" style="border-top: 3px double #888;margin: 20px 0; padding-top: 25px;">
+		<br/>
+			<table border="0" cellspacing="0" cellpadding="0">
+				<tr>
+					<td align="left" >
+						<p style="font-size:11px;">
+						CUSTOMER ID :    $customer_id <br/></p>
+					</td>
+					<td align="right" >
+						<p style="font-size:11px;">
+						INVOICE :    #$invoice_ids</p>
+					</td>
+				</tr>
+				<tr>
+					<td align="left" >
+						<p style="font-size:11px;">
+						BILL TO :    $name <br/></p>
+					</td>
+					<td align="right" >
+						<p style="font-size:11px;">
+						DATE :   $datefor</p>
+					</td>
+				</tr>
+				<tr>
+					<td align="left">
+						<p style="font-size:11px;">
+						ADDRESS :    $address $city <br/>$state<br/></p>
+					</td>
+					<td align="right" >
+						<p style="font-size:11px;">
+						UNIT RATE: 1 </p>
+					</td>
+				</tr>
+			</table>
+						
+		</div>
+		<div style="clear:both;"></div>
+		<div id="items-list">
+		    <table border="0" cellspacing="0"  cellspacing="0" cellpadding="5">
+				<tbody>	
+					<tr>
+						<td align="left">MONTH : </td>
+						<td align="left">$monthname $year</td>
+						<td align="left">READING : </td>
+						<td align="left">$aftermeter</td>
+					</tr>
+					<tr>
+						<td align="left">CONSUMED UNIT : </td>
+						<td align="left">$consumedunits</td>
+						<td align="left">PRICE : </td>
+						<td align="left">$amount</td>
+						
+					</tr>
+					<tr>
+						<td align="left">BALANCE  AMOUNT : </td>
+						<td align="left">$balance</td>
+						
+					</tr>
+					<tr>
+						<td align="left" >Pay : </td>
+						<td align="left">$pay_amount  $currency</td>
+					</tr>
+					<tr>
+						<td align="left" >Status : </td>
+						<td align="left">Paid</td>
+					</tr>
+				</tbody>	
+			</table>
+			<br/>
+		</div>
+		<br/><br/><br/>
+		<table>
+		  <tr>
+		     <td align="left"><p style=" color:#cdcdcd;">DATE : $todate</p></td>
+			 <td align="right"><p style="padding-right:50px; color:#cdcdcd;">SIGNATURE</p></td>
+		  </tr>
+		</table>  
+	</div>
+	</td>
+	</tr>
+	</table>
+  
+
+EOD;
+
+// output the HTML content
+    $pdf->writeHTML($html, true, false, true, false, '');
+
+    // ---------------------------------------------------------    
+    // Close and output PDF document
+    // This method has several options, check the source code documentation for more information.
+    $pdf->Output($customer . '.pdf', 'I');
+
+    //============================================================+
+    // END OF FILE
+    //============================================================+
+}
+
+    //public function monthlyreceipt_single($customer,$month,$year) {
+	public function monthlyreceipt_single($customer,$month,$year,$name,$current_reading,$oldmeter,$unit,$pay_amount,$invoi_id,$address) {	
+	//print_r($customer);	print_r($month);	print_r($year);	
+	$consume = $current_reading - $oldmeter;
+	$amo = $consume * $unit;
+	$bal = $amo - $pay_amount;
+    $receiptdata = $this->my_model->getReceiptData($customer, $month, $year);
+	$getaddress = $this->my_model->get_address();
+	$customerdetials = $this->my_model->customer_deatils($customer);
+	$intint = $intin + 1;
+    //print_r($receiptdata);
+	//print_r($customerdetials);
+    extract($receiptdata);
+    extract($getaddress);
+	extract($customerdetials);
+	$todate = date('d-m-Y');
+	$datefor = date('d-m-Y', strtotime($tdate));
+    //============================================================+
+    // create new PDF document
+    $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+    // set document information
+    $pdf->SetCreator(PDF_CREATOR);
+
+
+    // remove default header/footer
+    $pdf->setPrintHeader(false);
+    $pdf->setPrintFooter(false);
+
+    // set default header data
+    $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, PDF_HEADER_TITLE . ' 001', PDF_HEADER_STRING, array(0, 64, 255), array(0, 64, 128));
+    $pdf->setFooterData(array(0, 64, 0), array(0, 64, 128));
+
+    // set header and footer fonts
+    $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+    $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+    // set default monospaced font
+    $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+    // set margins
+    $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+    $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+    $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+    // set auto page breaks
+    $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+    // set image scale factor
+    $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+    // set some language-dependent strings (optional)
+    if (@file_exists(dirname(__FILE__) . '/lang/eng.php')) {
+        require_once(dirname(__FILE__) . '/lang/eng.php');
+        $pdf->setLanguageArray($l);
+    }
+
+    // ---------------------------------------------------------    
+    // set default font subsetting mode
+    $pdf->setFontSubsetting(false);
+
+    // Set font
+    // dejavusans is a UTF-8 Unicode font, if you only need to
+    // print standard ASCII chars, you can use core fonts like
+    // helvetica or times to reduce file size.
+    $pdf->SetFont('helvetica', '', 9, '', true);
+	//$pdf->SetBackColor(255,255,255);
+
+    // Add a page
+    // This method has several options, check the source code documentation for more information.
+    $pdf->AddPage();
+
+    /// create some HTML content
+
+    $html = <<<EOD
+	<table border="1" cellspacing="5" cellpadding="15" width="100%">
+	<tr>
+	<td>
+	<div class="invoice-inner" style="margin: 0 15px;padding: 20px 0;">
+	    <table border="0" cellspacing="0" cellpadding="0" width="100%">
+			<tr>
+				<td align="center" valign="top">
+				     <div class="logoDiv">
+					     <img id="logo" src="http://dayaxpower.com/images/favicon/logo.jpg" height="80">
+						 <h1>Company Name</h1>
+					     <h2>Invoice Receipt</h2>
+						 <p>(for Meter Customer)</p>
+					</div>
+				</td>
+			</tr>
+        </table>	
+		<table border="0" cellspacing="0" cellpadding="0" width="100%">
+			<tr>
+				<td align="right" valign="top">
+				    Address: Electicity Department<br/>
+					Near takli Road<br/>
+					Nagpur-440012
+				</td>
+			</tr>
+        </table>
+		<br/>
+		<div class="invoice-address" style="border-top: 3px double #888;margin: 20px 0; padding-top: 25px;">
+		<br/>
+		<table border="0" cellspacing="0" cellpadding="0">
+			<tr>
+				<td align="left" >
+					<p style="font-size:11px;">
+					CUSTOMER ID :    $customer <br/></p>
+				</td>
+				<td align="right" >
+					<p style="font-size:11px;">
+					INVOICE :    #$invoi_id</p>
+				</td>
+			</tr>
+			<tr>
+				<td align="left" >
+					<p style="font-size:11px;">
+					BILL TO :    $first_name $middle_name $last_name <br/></p>
+				</td>
+				<td align="right" >
+					<p style="font-size:11px;">
+					DATE :   $todate</p>
+				</td>
+			</tr>
+			<tr>
+				<td align="left">
+					<p style="font-size:11px;">
+					ADDRESS :    $address $city <br/>$state<br/></p>
+				</td>
+				<td align="right" >
+					<p style="font-size:11px;">
+					UNIT RATE: $unit </p>
+				</td>
+			</tr>
+		</table>
+						
+		</div>
+		<div style="clear:both;"></div>
+		<div id="items-list">
+		    <table border="0" cellspacing="0"  cellspacing="0" cellpadding="5">
+				<tbody>	
+					<tr>
+						<td align="left">MONTH : </td>
+						<td align="left">$monthname $year</td>
+						<td align="left">READING : </td>
+						<td align="left">$current_reading</td>
+					</tr>
+					<tr>
+						<td align="left">CONSUMED UNIT : </td>
+						<td align="left">$consume</td>
+						<td align="left">PRICE : </td>
+						<td align="left">$amo</td>
+						
+					</tr>
+					<tr>
+						<td align="left">BALANCE  AMOUNT : </td>
+						<td align="left">$bal</td>
+						
+					</tr>
+					<tr>
+						<td align="left" >Pay : </td>
+						<td align="left">$pay_amount  $currency</td>
+					</tr>
+					<tr>
+						<td align="left" >Status : </td>
+						<td align="left">Paid</td>
+					</tr>
+				</tbody>	
+			</table>
+			<br/>
+			    
+		</div>
+		<br/><br/><br/>
+		<table>
+		  <tr>
+		     <td align="left"><p style=" color:#cdcdcd;">DATE : $todate</p></td>
+			 <td align="right"><p style="padding-right:50px; color:#cdcdcd;">SIGNATURE</p></td>
+		  </tr>
+		</table>  
+	</div>
+    </td>
+    </tr>
+    </table>	
+  
+
+EOD;
+
+// output the HTML content
+    $pdf->writeHTML($html, true, false, true, false, '');
+
+    // ---------------------------------------------------------    
+    // Close and output PDF document
+    // This method has several options, check the source code documentation for more information.
+    $pdf->Output($customer . '.pdf', 'I');
+
+    //============================================================+
+    // END OF FILE
+    //============================================================+
+}
+
+
+}
+?>
