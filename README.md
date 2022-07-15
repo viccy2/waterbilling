@@ -1,2 +1,0 @@
-# waterbilling
- Waterbilling Management System.
