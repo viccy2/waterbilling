@@ -1,2 +1,2 @@
 # waterbilling
- A U.S based waterbilling software..
+ Waterbilling Management System...
